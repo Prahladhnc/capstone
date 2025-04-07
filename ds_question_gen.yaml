@@ -1,0 +1,60 @@
+name: "ds_question_paper_gpt"
+exp_manager:
+  exp_dir: /home/prahladh/nemo_question_gen/runs
+  create_tensorboard_logger: true
+  create_checkpoint_callback: true
+  checkpoint_callback_params:
+    every_n_epochs: 1
+    save_top_k: 3
+    monitor: train_loss
+    mode: min
+
+trainer:
+  devices: 1
+  accelerator: gpu
+  precision: bf16
+  max_epochs: 5
+  log_every_n_steps: 10
+  val_check_interval: 1.0
+  limit_val_batches: 0
+
+model:
+  restore_from_path: null
+  micro_batch_size: 4
+  global_batch_size: 32
+  tensor_model_parallel_size: 1
+  pipeline_model_parallel_size: 1
+  resume_from_checkpoint: null
+
+  seq_length: 1024
+  max_position_embeddings: 1024
+  encoder_num_layers: 24
+  encoder_hidden: 2048
+  encoder_ffn_hidden: 8192
+  encoder_attention_heads: 16
+
+  init_method_std: 0.02
+  hidden_dropout: 0.1
+  attention_dropout: 0.1
+  ffn_dropout: 0.1
+
+  data:
+    data_prefix: /home/prahladh/nemo_question_gen/data/dstqp_train.txt
+    num_workers: 4
+    seq_length: 1024
+    skip_warmup: true
+    tokenizer:
+      library: 'megatron'
+      type: 'GPT2BPETokenizer'
+      model: null
+
+  optim:
+    name: fused_adam
+    lr: 2e-4
+    weight_decay: 0.01
+    betas: [0.9, 0.95]
+    sched:
+      name: CosineAnnealing
+      warmup_steps: 1000
+      min_lr: 1e-5
+      constant_steps: 0
